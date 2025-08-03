@@ -1,0 +1,14 @@
+.dashboard_main_container {
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    height: 100vh;
+}
+
+.dashboard_left_container {
+    width: 50%;
+}
+
+.dashboard_right_container {
+    width: 50%;
+}
