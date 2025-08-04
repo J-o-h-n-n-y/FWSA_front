@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { nanoid } from "nanoid";
-import * as API from "../../API"; // путь подкорректируй под структуру проекта
+import * as API from "../../API"; 
 import SelectionIcon from "../../icons/SelectionIcon";
 import PCIcon from "../../icons/PCIcon";
 import LaptopIcon from "../../icons/LaptopIcon";
@@ -29,6 +29,7 @@ export default function DiagramEditor() {
   const [linkStartNode, setLinkStartNode] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [selectedLinkId, setSelectedLinkId] = useState(null);
 
   // === Загрузка nodes и links из API ===
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function DiagramEditor() {
         }));
 
         const linksFormatted = linksRes.data.map((l) => ({
+          id: l.i,
           source: { id: l.source_id },
           target: { id: l.destination_id },
         }));
@@ -90,10 +92,10 @@ export default function DiagramEditor() {
 
     const hitNode = nodes.find(
       (n) =>
-        pos.x >= n.x - 24 &&
-        pos.x <= n.x + 24 &&
-        pos.y >= n.y - 24 &&
-        pos.y <= n.y + 24
+        pos.x >= n.x - 96 &&
+        pos.x <= n.x + 96 &&
+        pos.y >= n.y - 96 &&
+        pos.y <= n.y + 96
     );
 
     if (hitNode) {
@@ -101,10 +103,11 @@ export default function DiagramEditor() {
         setLinkStartNode(hitNode);
       } else {
         setDragNodeId(hitNode.id);
-        setSelectedNodeId(hitNode.id);
+        //setSelectedNodeId(hitNode.id);
       }
     } else {
       setSelectedNodeId(null);
+      setSelectedLinkId(null)
     }
   };
 
@@ -134,14 +137,14 @@ export default function DiagramEditor() {
     if (linkStartNode) {
       const targetNode = nodes.find(
         (n) =>
-          pos.x >= n.x - 24 &&
-          pos.x <= n.x + 24 &&
-          pos.y >= n.y - 24 &&
-          pos.y <= n.y + 24 &&
+          pos.x >= n.x - 96 &&
+          pos.x <= n.x + 96 &&
+          pos.y >= n.y - 96 &&
+          pos.y <= n.y + 96 &&
           n.id !== linkStartNode.id
       );
       if (targetNode) {
-        const newLink = { source: { id: linkStartNode.id }, target: { id: targetNode.id } };
+        const newLink = { id: nanoid(), source: { id: linkStartNode.id }, target: { id: targetNode.id } };
         setLinks((prev) => [...prev, newLink]);
         API.createLink({
           source_id: linkStartNode.id,
@@ -185,8 +188,22 @@ export default function DiagramEditor() {
     API.createNode(newNode).catch(console.error);
   };
 
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+  const lineOnMouseClick = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedLinkId(id);
+  }
 
+  const handleKeyDown = (e) => {
+    console.log(e.key)
+    if (e.key == "Delete" && selectedLinkId) {
+      newLinks = links.filter(el => el.id !== selectedLinkId);
+      setLinks(newLinks);
+    }
+  }
+ 
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+  
   return (
     <div style={{ display: "flex", alignItems: "stretch", flexDirection: "row", height: "100%", width: "100%", userSelect: "none", position: "relative" }}>
       {editMode && (
@@ -229,13 +246,14 @@ export default function DiagramEditor() {
               if (!source || !target) return null;
               return (
                 <line
+                  onClick={(e) => lineOnMouseClick(e, l.id)}
                   key={i}
-                  x1={source.x}
-                  y1={source.y}
-                  x2={target.x}
-                  y2={target.y}
-                  stroke="#999"
-                  strokeWidth={2}
+                  x1={source.x + 40}
+                  y1={source.y + 40}
+                  x2={target.x + 40}
+                  y2={target.y + 40}
+                  stroke={l.id == selectedLinkId ? "#0d1e66ff" : "#999"}
+                  strokeWidth={l.id == selectedLinkId ? 6 : 4}
                 />
               );
             })}
